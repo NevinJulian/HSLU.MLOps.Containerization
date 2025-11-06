@@ -3,7 +3,7 @@ from src.train import launch_run
 
 def build_parser():
     p = argparse.ArgumentParser(description="Train DistilBERT on GLUE MRPC with Lightning.")
-    # Paths / logging
+
     p.add_argument("--checkpoint_dir", type=str, default="models", help="Where to save checkpoints/artifacts.")
     p.add_argument("--project", type=str, default="mrpc-distilbert", help="W&B project name.")
     p.add_argument("--entity", type=str, default=None, help="W&B entity/org (optional).")
@@ -11,7 +11,6 @@ def build_parser():
     p.add_argument("--run_name", type=str, default=None, help="Optional run name.")
     p.add_argument("--no_wandb", action="store_true", help="Disable Weights & Biases logging.")
 
-    # Training
     p.add_argument("--epochs", type=int, default=3)
     p.add_argument("--seed", type=int, default=42)
     p.add_argument("--train_batch_size", type=int, default=32)
@@ -19,7 +18,6 @@ def build_parser():
     p.add_argument("--max_seq_length", type=int, default=128)
     p.add_argument("--grad_accum", type=int, default=1)
 
-    # Optimizer / scheduler
     p.add_argument("--optimizer_name", type=str, default="adamw", choices=["adamw", "adam"])
     p.add_argument("--lr", type=float, default=1e-4, help="Learning rate.")
     p.add_argument("--weight_decay", type=float, default=0.015)
