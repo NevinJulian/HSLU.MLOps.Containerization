@@ -19,6 +19,7 @@ models/
 outputs/
 artifacts/
 wandb/
+containerization/
 
 # VSCode
 .vscode/
@@ -32,3 +33,5 @@ wandb/
 
 # Docker
 **/.DS_Store
+
+.env
