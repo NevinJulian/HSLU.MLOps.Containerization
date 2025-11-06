@@ -19,6 +19,7 @@ models/
 outputs/
 artifacts/
 wandb/
+containerization/
 
 # VSCode
 .vscode/
