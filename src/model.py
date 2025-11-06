@@ -1,6 +1,6 @@
 from typing import Optional
 import torch
-import evaluate
+from sklearn.metrics import accuracy_score, f1_score
 import lightning as L
 from transformers import (
     AutoConfig,
@@ -35,7 +35,6 @@ class GLUETransformer(L.LightningModule):
         self.model = AutoModelForSequenceClassification.from_pretrained(
             model_name_or_path, config=self.config
         )
-        self.metric = evaluate.load("glue", task_name)
         self.validation_step_outputs = []
 
     def forward(self, **inputs):
@@ -64,10 +63,16 @@ class GLUETransformer(L.LightningModule):
         preds = torch.cat([x["preds"] for x in self.validation_step_outputs]).detach().cpu().numpy()
         labels = torch.cat([x["labels"] for x in self.validation_step_outputs]).detach().cpu().numpy()
         loss = torch.stack([x["loss"] for x in self.validation_step_outputs]).mean()
-        self.log("val_loss", loss, prog_bar=True)
-        self.log_dict(self.metric.compute(predictions=preds, references=labels), prog_bar=True)
-        self.validation_step_outputs.clear()
 
+        acc = float(accuracy_score(labels, preds))
+        f1 = float(f1_score(labels, preds))
+
+        self.log("val_loss", loss, prog_bar=True)
+        self.log("accuracy", acc, prog_bar=True)
+        self.log("f1", f1, prog_bar=True)
+
+        self.validation_step_outputs.clear()
+        
     def configure_optimizers(self):
         model = self.model
         no_decay = ["bias", "LayerNorm.weight"]
