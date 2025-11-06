@@ -4,10 +4,6 @@ from dotenv import load_dotenv
 import wandb
 from src.train import launch_run
 
-<<<<<<< HEAD
-# ==== DEFAULT WANDB SETTINGS ====
-=======
->>>>>>> 07eb813 (add run best script)
 DEFAULT_WANDB = {
     "PROJECT": "containerization",
     "ENTITY": "nevinhelfenstein-hslu-mlops",
@@ -16,11 +12,7 @@ DEFAULT_WANDB = {
 
 def setup_wandb_defaults():
     """Load .env and initialize default W&B environment."""
-<<<<<<< HEAD
-    load_dotenv()  # loads WANDB_API_KEY if present
-=======
     load_dotenv()
->>>>>>> 07eb813 (add run best script)
 
     api_key = os.getenv("WANDB_API_KEY")
     if not api_key:
@@ -35,10 +27,6 @@ def setup_wandb_defaults():
 def build_parser():
     p = argparse.ArgumentParser(description="Train DistilBERT on GLUE MRPC with Lightning.")
 
-<<<<<<< HEAD
-    # Logging / W&B
-=======
->>>>>>> 07eb813 (add run best script)
     p.add_argument("--checkpoint_dir", type=str, default="models", help="Where to save checkpoints.")
     p.add_argument("--project", type=str, default=DEFAULT_WANDB["PROJECT"])
     p.add_argument("--entity", type=str, default=DEFAULT_WANDB["ENTITY"])
@@ -46,19 +34,13 @@ def build_parser():
     p.add_argument("--run_name", type=str, default=None)
     p.add_argument("--no_wandb", action="store_true", help="Disable Weights & Biases logging.")
 
-    # Training parameters
     p.add_argument("--epochs", type=int, default=3)
     p.add_argument("--seed", type=int, default=42)
     p.add_argument("--train_batch_size", type=int, default=32)
     p.add_argument("--eval_batch_size", type=int, default=64)
     p.add_argument("--max_seq_length", type=int, default=128)
     p.add_argument("--grad_accum", type=int, default=1)
-<<<<<<< HEAD
-
-    # Optimizer / scheduler
-=======
     
->>>>>>> 07eb813 (add run best script)
     p.add_argument("--optimizer_name", type=str, default="adamw", choices=["adamw", "adam"])
     p.add_argument("--lr", type=float, default=1e-4)
     p.add_argument("--weight_decay", type=float, default=0.015)
