@@ -1,16 +1,42 @@
 import argparse
+import os
+from dotenv import load_dotenv
+import wandb
 from src.train import launch_run
+
+# ==== DEFAULT WANDB SETTINGS ====
+DEFAULT_WANDB = {
+    "PROJECT": "containerization",
+    "ENTITY": "nevinhelfenstein-hslu-mlops",
+    "GROUP": "containerization",
+}
+
+def setup_wandb_defaults():
+    """Load .env and initialize default W&B environment."""
+    load_dotenv()  # loads WANDB_API_KEY if present
+
+    api_key = os.getenv("WANDB_API_KEY")
+    if not api_key:
+        raise ValueError("WANDB_API_KEY not found. Please set it in your .env file.")
+
+    wandb.login(key=api_key)
+    print(
+        f"W&B configured for project='{DEFAULT_WANDB['PROJECT']}', "
+        f"entity='{DEFAULT_WANDB['ENTITY']}', group='{DEFAULT_WANDB['GROUP']}'"
+    )
 
 def build_parser():
     p = argparse.ArgumentParser(description="Train DistilBERT on GLUE MRPC with Lightning.")
 
-    p.add_argument("--checkpoint_dir", type=str, default="models", help="Where to save checkpoints/artifacts.")
-    p.add_argument("--project", type=str, default="mrpc-distilbert", help="W&B project name.")
-    p.add_argument("--entity", type=str, default=None, help="W&B entity/org (optional).")
-    p.add_argument("--group", type=str, default=None, help="Optional W&B group.")
-    p.add_argument("--run_name", type=str, default=None, help="Optional run name.")
+    # Logging / W&B
+    p.add_argument("--checkpoint_dir", type=str, default="models", help="Where to save checkpoints.")
+    p.add_argument("--project", type=str, default=DEFAULT_WANDB["PROJECT"])
+    p.add_argument("--entity", type=str, default=DEFAULT_WANDB["ENTITY"])
+    p.add_argument("--group", type=str, default=DEFAULT_WANDB["GROUP"])
+    p.add_argument("--run_name", type=str, default=None)
     p.add_argument("--no_wandb", action="store_true", help="Disable Weights & Biases logging.")
 
+    # Training parameters
     p.add_argument("--epochs", type=int, default=3)
     p.add_argument("--seed", type=int, default=42)
     p.add_argument("--train_batch_size", type=int, default=32)
@@ -18,8 +44,9 @@ def build_parser():
     p.add_argument("--max_seq_length", type=int, default=128)
     p.add_argument("--grad_accum", type=int, default=1)
 
+    # Optimizer / scheduler
     p.add_argument("--optimizer_name", type=str, default="adamw", choices=["adamw", "adam"])
-    p.add_argument("--lr", type=float, default=1e-4, help="Learning rate.")
+    p.add_argument("--lr", type=float, default=1e-4)
     p.add_argument("--weight_decay", type=float, default=0.015)
     p.add_argument("--lr_scheduler_type", type=str, default="linear", choices=["linear", "cosine", "constant"])
     p.add_argument("--warmup_ratio", type=float, default=0.11)
@@ -32,6 +59,10 @@ def build_parser():
 
 def main():
     args = build_parser().parse_args()
+
+    if not args.no_wandb:
+        setup_wandb_defaults()
+
     launch_run(
         checkpoint_dir=args.checkpoint_dir,
         project=args.project,

@@ -32,3 +32,5 @@ wandb/
 
 # Docker
 **/.DS_Store
+
+.env
