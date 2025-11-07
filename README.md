@@ -1,88 +1,106 @@
 # MRPC DistilBERT: Containerized Training
 
-This repository turns the Project 1 notebook into a reproducible CLI + Docker workflow. It trains DistilBERT on GLUE MRPC and logs to Weights & Biases (optional).
+This repository provides a reproducible workflow for training **DistilBERT** on the **GLUE MRPC** dataset.  
+It supports both **local** and **Docker-based** execution and logs all experiments to **Weights & Biases**:  
+[W&B Project Dashboard](https://wandb.ai/nevinhelfenstein-hslu-mlops/containerization?nw=nwusernevinhelfenstein)
 
-## Folder structure
+---
+
+## Folder Structure
 ```
 .
-├─ src/                # data and model modules
-├─ main.py             # CLI entry point
-├─ requirements-*.txt  # dependency pins
-├─ Dockerfile.gpu      # GPU build (NVIDIA)
-├─ Dockerfile.cpu      # CPU-only build (small)
-├─ models/             # created at runtime
-└─ README.md
+├── src/                       # model and data modules
+├── main.py                    # CLI entry point
+├── Dockerfile.cpu             # CPU-only Dockerfile
+├── Dockerfile.gpu             # GPU Dockerfile (optional)
+├── requirements-*.txt         # dependency pins
+├── execution_scripts/         # build/run helper scripts
+├── models/                    # training outputs (not in the git but will be created during execution)
+└── README.md
 ```
 
-## Quickstart (local, no Docker)
+---
+
+## 1. Clone the Repository
 ```bash
-python -m venv .venv && source .venv/bin/activate
-pip install -r requirements-cpu.txt           # CPU-only torch
-# or: pip install -r requirements-gpu.txt     # if you already have CUDA torch
-export WANDB_API_KEY=YOUR_KEY                 # optional
-python main.py --checkpoint_dir models --epochs 3 --seed 42 \
-  --train_batch_size 32 --eval_batch_size 64 \
-  --optimizer_name adamw --lr 1e-4 --lr_scheduler_type linear \
-  --warmup_ratio 0.11 --weight_decay 0.015
+git clone https://github.com/<your-username>/HSLU.MLOps.Containerization.git
+cd HSLU.MLOps.Containerization
 ```
 
-## One-command training
+---
+
+## 2. Configure Weights & Biases
+Create a `.env` file in the project root:
 ```bash
-python main.py --checkpoint_dir models --lr 1e-4
+WANDB_API_KEY=your_wandb_api_key
 ```
-All hyperparameters are configurable via flags. Artifacts are saved under `models/<auto-run-name>/`.
 
-## Docker (GPU)
-Requires the NVIDIA Container Toolkit.
+All training runs will automatically log to W&B if this key is provided.  
+To **disable W&B logging**, add the CLI flag `--no_wandb` when launching a run:
+```bash
+python main.py --no_wandb ...
+```
+
+**Behavior summary:**
+- The execution scripts in `execution_scripts/` **enable W&B logging by default**.
+- If you run the Docker image directly (without those scripts), W&B logging is **disabled by default** inside the image.
+- You can always override the behavior with the `--no_wandb` or `--run_name` CLI flags.
+
+---
+
+## 3. Build the Docker Image
+**CPU image** (works everywhere):
+```bash
+docker build -t mrpc-cpu -f Dockerfile.cpu .
+```
+
+**GPU image** (requires NVIDIA toolkit):
 ```bash
 docker build -t mrpc-gpu -f Dockerfile.gpu .
-# optional: pass WANDB credentials at runtime
-docker run --gpus all --rm -e WANDB_API_KEY=$WANDB_API_KEY -v $PWD/models:/app/models mrpc-gpu
 ```
 
-## Docker (CPU)
-Suitable for constrained environments.
+---
+
+## 4. Run Training
+
+### Local (no Docker)
+```bash
+python main.py   --checkpoint_dir models   --epochs 3   --seed 42   --train_batch_size 32   --eval_batch_size 64   --optimizer_name adamw   --lr 1e-4   --lr_scheduler_type linear   --warmup_ratio 0.11   --weight_decay 0.015   --run_name local
+```
+
+### Local Docker
+```bash
+bash execution_scripts/build_and_run_docker.sh
+```
+This script rebuilds the image and runs a containerized training job with `--run_name local_docker`.
+
+### GitHub Codespaces or Docker Playground
+Run the same image in the cloud:
 ```bash
 docker build -t mrpc-cpu -f Dockerfile.cpu .
-docker run --rm -v $PWD/models:/app/models mrpc-cpu
+docker run --rm --env-file .env -v "$PWD/models:/app/models" mrpc-cpu   python main.py --checkpoint_dir models     --epochs 3 --seed 42     --train_batch_size 32 --eval_batch_size 64     --optimizer_name adamw --lr 1e-4     --lr_scheduler_type linear --warmup_ratio 0.11 --weight_decay 0.015     --run_name github_codespace
 ```
 
-## GitHub Codespaces
-1. Create a Codespace on this repo (4‑core+ recommended).
-2. In the terminal:
-   ```bash
-   python -m venv .venv && source .venv/bin/activate
-   pip install -r requirements-cpu.txt
-   export WANDB_API_KEY=YOUR_KEY   # optional
-   python main.py --checkpoint_dir models --epochs 3 --seed 42 \
-     --train_batch_size 32 --eval_batch_size 64 \
-     --optimizer_name adamw --lr 1e-4 --lr_scheduler_type linear \
-     --warmup_ratio 0.11 --weight_decay 0.015
-   ```
-   Or build and run the CPU Docker image:
-   ```bash
-   docker build -t mrpc-cpu -f Dockerfile.cpu .
-   docker run --rm -v $PWD/models:/app/models mrpc-cpu
-   ```
+---
 
-## Docker Playground
-Playground VMs are small. Use the CPU image:
-```bash
-git clone <this-repo> && cd <repo>
-docker build -t mrpc-cpu -f Dockerfile.cpu .
-docker run --rm -v $PWD/models:/app/models mrpc-cpu
+## 5. Output and Model Reuse
+Trained models are stored in:
 ```
-If memory is tight, remove the pre-download step in `Dockerfile.cpu` and rely on runtime downloads.
-
-## Reusing the trained model
-Outputs are saved in `models/<run>/` as a standard Hugging Face folder. Load with:
+models/<run_name>/
+```
+Load them in Python:
 ```python
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
-m = AutoModelForSequenceClassification.from_pretrained("models/<run>")
-tok = AutoTokenizer.from_pretrained("models/<run>")
+model = AutoModelForSequenceClassification.from_pretrained("models/<run_name>")
+tokenizer = AutoTokenizer.from_pretrained("models/<run_name>")
 ```
 
-## Notes
-- Training config defaults to the best setup reported in Project 1: epochs=3, seed=42, batch train/eval=32/64, AdamW, linear schedule, lr=1e-4, warmup_ratio=0.11, weight_decay=0.015.
-- Logging uses W&B if `WANDB_API_KEY` is present; disable via `--no_wandb`.
-- `accelerator="auto"` lets Lightning use GPU when available.
+---
+
+## 6. Notes
+- Defaults match the best configuration from Project 1:  
+  epochs = 3, seed = 42, train/eval batch = 32/64, AdamW, linear scheduler, lr = 1e-4, warmup_ratio = 0.11, weight_decay = 0.015.  
+- Logs automatically to W&B if `WANDB_API_KEY` is provided.  
+- Use `--no_wandb` to disable logging explicitly.    
+
+
