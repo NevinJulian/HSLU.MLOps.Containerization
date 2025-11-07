@@ -1,2 +1,1 @@
-# When using the official PyTorch CUDA image, torch is preinstalled.
 -r requirements-base.txt

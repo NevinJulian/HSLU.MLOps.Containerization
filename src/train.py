@@ -131,14 +131,12 @@ def launch_run(
 
     trainer.fit(model, datamodule=dm)
 
-    # Save final model + tokenizer in a simple folder for reuse
     save_dir = os.path.join(checkpoint_dir, auto_name)
     os.makedirs(save_dir, exist_ok=True)
     model.model.save_pretrained(save_dir)
     from transformers import AutoTokenizer
     AutoTokenizer.from_pretrained("distilbert-base-uncased", use_fast=True).save_pretrained(save_dir)
 
-    # Persist basic metadata
     meta = {
         "save_dir": save_dir,
         "created_utc": datetime.utcnow().isoformat() + "Z",

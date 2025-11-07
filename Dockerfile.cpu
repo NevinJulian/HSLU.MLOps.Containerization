@@ -1,7 +1,5 @@
-# Small, CPU-only image suited for Docker Playground / Codespaces without GPU
 FROM python:3.11-slim
 
-# Avoids tzdata prompts and reduces image size
 ENV DEBIAN_FRONTEND=noninteractive \
     PIP_NO_CACHE_DIR=1 \
     PYTHONUNBUFFERED=1 \
@@ -9,21 +7,16 @@ ENV DEBIAN_FRONTEND=noninteractive \
 
 WORKDIR /app
 
-# System deps for tokenizers and torch
 RUN apt-get update && apt-get install -y --no-install-recommends \ 
     git curl build-essential pkg-config python3-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements first
 COPY requirements-cpu.txt requirements-base.txt ./
 
-# Install CPU-only PyTorch and libs
 RUN pip install -r requirements-cpu.txt
 
-# Copy project
 COPY . .
 
-# Optional: pre-download HF weights to the image to avoid timeouts on small VMs
 RUN python - <<'PY'
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 m = 'distilbert-base-uncased'
@@ -32,5 +25,6 @@ AutoModelForSequenceClassification.from_pretrained(m)
 print('Cached:', m)
 PY
 
-# Default command = best hyperparameters
+
+# Entrypoint: single best run from Project 1 (can be overridden with CLI flags)
 CMD ["python","main.py","--checkpoint_dir","models","--epochs","3","--seed","42","--train_batch_size","32","--eval_batch_size","64","--optimizer_name","adamw","--lr","1e-4","--lr_scheduler_type","linear","--warmup_ratio","0.11","--weight_decay","0.015","--no_wandb"]

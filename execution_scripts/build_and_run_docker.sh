@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 set -euo pipefail
 
 echo "=== Building Docker image (mrpc-cpu) ==="
@@ -12,6 +13,7 @@ docker run --rm \
     --epochs 3 --seed 42 \
     --train_batch_size 32 --eval_batch_size 64 \
     --optimizer_name adamw --lr 1e-4 \
-    --lr_scheduler_type linear --warmup_ratio 0.11 --weight_decay 0.015
+    --lr_scheduler_type linear --warmup_ratio 0.11 --weight_decay 0.015 \
+    --run_name local_docker
 
 echo "=== Training finished. Model artifacts saved in ./models ==="

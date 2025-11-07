@@ -8,4 +8,5 @@ python main.py \
   --lr 1e-4 \
   --lr_scheduler_type linear \
   --warmup_ratio 0.11 \
-  --weight_decay 0.015
+  --weight_decay 0.015 \
+  --run_name local
