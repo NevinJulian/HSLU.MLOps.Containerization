@@ -12,7 +12,6 @@ It supports both **local** and **Docker-based** execution and logs all experimen
 ├── src/                       # model and data modules
 ├── main.py                    # CLI entry point
 ├── Dockerfile.cpu             # CPU-only Dockerfile
-├── Dockerfile.gpu             # GPU Dockerfile (optional)
 ├── requirements-*.txt         # dependency pins
 ├── execution_scripts/         # build/run helper scripts
 ├── models/                    # training outputs (not in the git but will be created during execution)
@@ -49,16 +48,10 @@ python main.py --no_wandb ...
 ---
 
 ## 3. Build the Docker Image
-**CPU image** (works everywhere):
+**CPU image**:
 ```bash
 docker build -t mrpc-cpu -f Dockerfile.cpu .
 ```
-
-**GPU image** (requires NVIDIA toolkit):
-```bash
-docker build -t mrpc-gpu -f Dockerfile.gpu .
-```
-
 ---
 
 ## 4. Run Training
@@ -74,7 +67,7 @@ bash execution_scripts/build_and_run_docker.sh
 ```
 This script rebuilds the image and runs a containerized training job with `--run_name local_docker`.
 
-### GitHub Codespaces or Docker Playground
+### GitHub Codespaces
 Run the same image in the cloud:
 ```bash
 docker build -t mrpc-cpu -f Dockerfile.cpu .
